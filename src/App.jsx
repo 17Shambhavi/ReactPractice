@@ -3,6 +3,8 @@ import ExpenseTracker from "./ExpenseTracker";
 import Weather from "./Weather";
 import MusicPlayer from "./MusicPlayer";
 import CurrencyConverter from "./CurrencyConverter";
+import Login from "./Login";
+import useLocalStorage from "./useLocalStorage";
 
 const COLORS = [
   { name: "Purple", value: "#7c3aed" },
@@ -31,12 +33,18 @@ function Card({ title, icon, children, accent = "#7c3aed" }) {
 }
 
 function App() {
-  const [name, setName] = useState("");
+  // Login State
+  const [user, setUser] = useLocalStorage("user", null);
+
+  // App States with Local Storage
+  const [todos, setTodos] = useLocalStorage("todos", []);
+  const [darkMode, setDarkMode] = useLocalStorage("darkMode", true);
+  const [bgColor, setBgColor] = useLocalStorage("bgColor", "#7c3aed");
+
+  // Normal States
+  const [name, setName] = useState(user || "");
   const [count, setCount] = useState(0);
-  const [bgColor, setBgColor] = useState("#7c3aed");
-  const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
-  const [darkMode, setDarkMode] = useState(true);
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
@@ -65,6 +73,16 @@ function App() {
   const toggleTodo = (id) => setTodos(todos.map(t => t.id === id ? { ...t, done: !t.done } : t));
   const deleteTodo = (id) => setTodos(todos.filter(t => t.id !== id));
 
+  const handleLogin = (username) => {
+    setUser(username);
+    setName(username);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setName("");
+  };
+
   const bg = darkMode
     ? "linear-gradient(135deg, #0f0c29, #302b63, #24243e)"
     : `linear-gradient(135deg, ${bgColor}dd, ${bgColor}88)`;
@@ -87,6 +105,9 @@ function App() {
     background: "rgba(255,255,255,0.15)", color: "white",
     fontWeight: "bold", cursor: "pointer"
   };
+
+  // Show Login if not logged in
+  if (!user) return <Login onLogin={handleLogin} />;
 
   if (showExpense) return (
     <div><button onClick={() => setShowExpense(false)} style={backBtn}>← Back</button><ExpenseTracker /></div>
@@ -113,17 +134,22 @@ function App() {
       }}>
         <div>
           <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "800" }}>⚛️ My React App</h1>
-          {name
-            ? <p style={{ margin: "5px 0 0", opacity: 0.7, fontSize: "13px" }}>👋 Hello, <strong>{name}</strong>!</p>
-            : <p style={{ margin: "5px 0 0", opacity: 0.4, fontSize: "13px" }}>Enter your name below</p>
-          }
+          <p style={{ margin: "5px 0 0", opacity: 0.7, fontSize: "13px" }}>👋 Hello, <strong>{user}</strong>!</p>
         </div>
-        <button onClick={() => setDarkMode(!darkMode)} style={{
-          ...btn(darkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)"),
-          borderRadius: "50px", padding: "9px 18px"
-        }}>
-          {darkMode ? "☀️ Light" : "🌙 Dark"}
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={() => setDarkMode(!darkMode)} style={{
+            ...btn(darkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)"),
+            borderRadius: "50px", padding: "9px 14px"
+          }}>
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+          <button onClick={handleLogout} style={{
+            ...btn("rgba(239,68,68,0.3)"),
+            borderRadius: "50px", padding: "9px 14px"
+          }}>
+            🚪
+          </button>
+        </div>
       </div>
 
       <div style={{ maxWidth: "520px", margin: "0 auto" }}>
@@ -248,7 +274,7 @@ function App() {
 
         <Card title="Currency Converter" icon="💱" accent="#6366f1">
           <p style={{ opacity: 0.6, margin: "0 0 14px", fontSize: "13px" }}>
-            Live exchange rates — USD, EUR, INR, GBP & more!
+            Convert between USD, EUR, INR, GBP & more!
           </p>
           <button onClick={() => setShowCurrency(true)} style={{
             ...btn("linear-gradient(135deg, #6366f1, #8b5cf6)"),
